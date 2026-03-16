@@ -2,8 +2,9 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: boardgame-ingress
+  namespace: demoapp-dev
 spec:
-  ingressClassName: nginx                          # Use 'alb' for AWS ALB Ingress Controller
+  ingressClassName: alb                          # Use 'alb' for AWS ALB Ingress Controller
   rules:
     - host: boardgame.example.com                  # Replace with your actual domain
       http:
