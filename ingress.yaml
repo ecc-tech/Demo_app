@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: boardgame-ingress
+spec:
+  ingressClassName: nginx                          # Use 'alb' for AWS ALB Ingress Controller
+  rules:
+    - host: boardgame.example.com                  # Replace with your actual domain
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: boardgame-ssvc               # Must match Service metadata.name
+                port:
+                  number: 80                       # Must match Service port
