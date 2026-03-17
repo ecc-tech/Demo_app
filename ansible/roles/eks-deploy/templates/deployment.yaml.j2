@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ app_name }}-deployment
+  namespace: {{ namespace }}
+spec:
+  replicas: {{ replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: {{ max_surge }}
+      maxUnavailable: {{ max_unavailable }}
+  selector:
+    matchLabels:
+      app: {{ app_name }}
+  template:
+    metadata:
+      labels:
+        app: {{ app_name }}
+    spec:
+      containers:
+        - name: {{ app_name }}
+          image: "{{ ecr_registry }}/{{ ecr_repo }}:{{ image_tag }}"
+          imagePullPolicy: Always
+          ports:
+            - containerPort: {{ container_port }}
+          readinessProbe:
+            httpGet:
+              path: {{ readiness_probe_path }}
+              port: {{ container_port }}
+            initialDelaySeconds: {{ probe_initial_delay_seconds }}
+            periodSeconds: {{ probe_period_seconds }}
+            failureThreshold: {{ probe_failure_threshold }}
+            timeoutSeconds: {{ probe_timeout_seconds }}
+          livenessProbe:
+            httpGet:
+              path: {{ liveness_probe_path }}
+              port: {{ container_port }}
+            initialDelaySeconds: {{ probe_initial_delay_seconds }}
+            periodSeconds: {{ probe_period_seconds }}
+            failureThreshold: {{ probe_failure_threshold }}
+            timeoutSeconds: {{ probe_timeout_seconds }}
+          resources:
+            requests:
+              cpu: "{{ resources_requests_cpu }}"
+              memory: "{{ resources_requests_memory }}"
+            limits:
+              cpu: "{{ resources_limits_cpu }}"
+              memory: "{{ resources_limits_memory }}"
+          volumeMounts:
+            - name: {{ volume_name }}
+              mountPath: {{ mount_path }}
+      volumes:
+        - name: {{ volume_name }}
+          persistentVolumeClaim:
+            claimName: {{ pvc_name }}

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: PersistentVolumeClaim # PVC to request persistent storage
+metadata:
+  name: {{ pvc_name }}
+  namespace: {{ namespace }}
+spec:
+  accessModes:
+    - {{ storage_access_mode }}
+  resources:
+    requests:
+      storage: {{ storage_size }}

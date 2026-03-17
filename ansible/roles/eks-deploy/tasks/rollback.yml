@@ -1,0 +1,72 @@
+---
+# ============================================================
+# tasks/rollback.yml – Automatic Rollback
+# Only runs when rollout_failed == true (set by verify.yml).
+# Executes "kubectl rollout undo" and then fails the playbook
+# so Jenkins marks the build as FAILED, triggering notifications.
+# ============================================================
+
+- name: "[ROLLBACK] Deployment {{ app_name }} failed – initiating rollback"
+  ansible.builtin.debug:
+    msg: >-
+      Rollout status check failed. Rolling back deployment/{{ app_name }}-deployment
+      in namespace {{ namespace }} to the previous stable revision.
+  tags: [rollback]
+
+# ── Capture current revision before rollback ──────────────────
+- name: "[ROLLBACK] Get current deployment revision"
+  ansible.builtin.command:
+    cmd: >
+      kubectl rollout history deployment/{{ app_name }}-deployment
+      --namespace {{ namespace }}
+      --kubeconfig {{ kubeconfig_path }}
+  register: rollout_history
+  changed_when: false
+  tags: [rollback]
+
+- name: "[ROLLBACK] Print rollout history"
+  ansible.builtin.debug:
+    msg: "{{ rollout_history.stdout_lines }}"
+  tags: [rollback]
+
+# ── Execute rollback ──────────────────────────────────────────
+- name: "[ROLLBACK] Execute kubectl rollout undo"
+  ansible.builtin.command:
+    cmd: >
+      kubectl rollout undo deployment/{{ app_name }}-deployment
+      --namespace {{ namespace }}
+      --kubeconfig {{ kubeconfig_path }}
+  register: undo_result
+  changed_when: true
+  tags: [rollback]
+
+- name: "[ROLLBACK] Print undo result"
+  ansible.builtin.debug:
+    msg: "{{ undo_result.stdout }}"
+  tags: [rollback]
+
+# ── Verify rollback itself succeeded ─────────────────────────
+- name: "[ROLLBACK] Wait for rollback to complete"
+  ansible.builtin.command:
+    cmd: >
+      kubectl rollout status deployment/{{ app_name }}-deployment
+      --namespace {{ namespace }}
+      --timeout {{ rollout_timeout }}
+      --kubeconfig {{ kubeconfig_path }}
+  register: undo_status
+  changed_when: false
+  tags: [rollback]
+
+- name: "[ROLLBACK] Print rollback status"
+  ansible.builtin.debug:
+    msg: "{{ undo_status.stdout_lines }}"
+  tags: [rollback]
+
+# ── Fail the playbook so Jenkins marks build as FAILED ────────
+- name: "[ROLLBACK] Fail playbook to signal Jenkins of deployment failure"
+  ansible.builtin.fail:
+    msg: >-
+      Deployment of {{ app_name }}:{{ image_tag }} FAILED.
+      Automatic rollback to previous stable revision was performed.
+      Review pod logs: kubectl logs -l app={{ app_name }} -n {{ namespace }}
+  tags: [rollback]

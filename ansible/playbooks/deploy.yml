@@ -1,0 +1,29 @@
+---
+# ============================================================
+# Main Deployment Playbook
+# Triggered by Jenkins; IMAGE_TAG is injected as an extra-var:
+#   ansible-playbook playbooks/deploy.yml -e "image_tag={{ IMAGE_TAG }}"
+# ============================================================
+
+- name: Deploy application to EKS
+  hosts: eks_controller          # Runs on the Ansible EC2 node (localhost)
+  gather_facts: false            # No need for system facts on localhost
+
+  vars_prompt:
+    # Only prompts interactively; Jenkins overrides via -e flag
+    - name: image_tag
+      prompt: "Enter the Docker image tag to deploy (e.g. v1.2.3 or git SHA)"
+      private: false
+
+  pre_tasks:
+    - name: Ensure image_tag is defined and not empty
+      ansible.builtin.assert:
+        that:
+          - image_tag is defined
+          - image_tag | length > 0
+        fail_msg: >-
+          image_tag must be passed. Example:
+          ansible-playbook playbooks/deploy.yml -e "image_tag=abc1234"
+
+  roles:
+    - role: eks-deploy

@@ -1,0 +1,51 @@
+---
+# ============================================================
+# tasks/main.yml – Orchestrator
+# Runs all sub-tasks in order:
+#   1. Ensure namespace exists
+#   2. Configure kubeconfig for EKS
+#   3. Deploy application
+#   4. Verify rollout
+#   5. Rollback if verification failed
+# ============================================================
+
+# ── Step 1: Ensure Kubernetes namespace exists ────────────────
+- name: Create namespace if it does not exist
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig_path }}"
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ namespace }}"
+        labels:
+          managed-by: ansible
+  tags: [namespace]
+
+# ── Step 2: Update kubeconfig for EKS ────────────────────────
+- name: Update kubeconfig to point to EKS cluster
+  ansible.builtin.command:
+    cmd: >
+      aws eks update-kubeconfig
+      --name {{ cluster_name }}
+      --region {{ aws_region }}
+      --kubeconfig {{ kubeconfig_path }}
+  changed_when: true   # Always runs; idempotent by nature (overwrites file)
+  tags: [kubeconfig]
+
+# ── Step 3: Deploy application resources ─────────────────────
+- name: Apply Kubernetes manifests (Deployment, Service, Ingress)
+  ansible.builtin.include_tasks: deploy.yml
+  tags: [deploy]
+
+# ── Step 4: Verify rollout success ───────────────────────────
+- name: Verify rollout completed successfully
+  ansible.builtin.include_tasks: verify.yml
+  tags: [verify]
+
+# ── Step 5: Rollback if rollout failed ───────────────────────
+- name: Rollback if deployment is unhealthy
+  ansible.builtin.include_tasks: rollback.yml
+  when: rollout_failed | default(false) | bool
+  tags: [rollback]

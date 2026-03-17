@@ -1,0 +1,42 @@
+---
+# ============================================================
+# tasks/verify.yml – Rollout verification
+# Watches "kubectl rollout status" output and sets a flag if
+# the rollout did not complete within the allowed timeout.
+# This flag is consumed by rollback.yml.
+# ============================================================
+
+# ── Watch rollout using kubectl ───────────────────────────────
+- name: Watch rollout status for {{ app_name }} deployment
+  ansible.builtin.command:
+    cmd: >
+      kubectl rollout status deployment/{{ app_name }}-deployment
+      --namespace {{ namespace }}
+      --timeout {{ rollout_timeout }}
+      --kubeconfig {{ kubeconfig_path }}
+  register: rollout_status
+  failed_when: false           # Don't fail here – let rollback.yml decide
+  changed_when: false          # Read-only check
+  tags: [verify]
+
+# ── Log outcome ───────────────────────────────────────────────
+- name: Print rollout status output
+  ansible.builtin.debug:
+    msg: "{{ rollout_status.stdout_lines }}"
+  tags: [verify]
+
+# ── Set failure flag ──────────────────────────────────────────
+- name: Set rollout_failed flag based on rollout exit code
+  ansible.builtin.set_fact:
+    rollout_failed: "{{ rollout_status.rc != 0 }}"
+  tags: [verify]
+
+- name: Announce rollout result
+  ansible.builtin.debug:
+    msg: >-
+      {% if rollout_failed %}
+      ⚠️  Rollout FAILED (rc={{ rollout_status.rc }}). Rollback will be triggered.
+      {% else %}
+      ✅  Rollout SUCCEEDED. All pods are healthy.
+      {% endif %}
+  tags: [verify]

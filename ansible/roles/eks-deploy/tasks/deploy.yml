@@ -1,0 +1,49 @@
+---
+# ============================================================
+# tasks/deploy.yml – Apply Kubernetes manifests via templates
+# Uses kubernetes.core.k8s to apply rendered Jinja2 templates.
+# Idempotent: re-applying the same manifest is safe.
+# ============================================================
+
+# ── PVC ──────────────────────────────────────────────────────
+- name: Apply PersistentVolumeClaim manifest
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig_path }}"
+    state: present
+    namespace: "{{ namespace }}"
+    definition: "{{ lookup('template', 'pvc.yaml.j2') | from_yaml }}"
+  tags: [deploy, pvc]
+
+# ── Deployment ───────────────────────────────────────────────
+- name: Apply Deployment manifest
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig_path }}"
+    state: present
+    namespace: "{{ namespace }}"
+    definition: "{{ lookup('template', 'deployment.yaml.j2') | from_yaml }}"
+  register: deploy_result
+  tags: [deploy]
+
+- name: Show deployment apply result
+  ansible.builtin.debug:
+    msg: "Deployment {{ app_name }} apply status: {{ deploy_result.result.status | default('applied') }}"
+  tags: [deploy]
+
+# ── Service ──────────────────────────────────────────────────
+- name: Apply Service manifest
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig_path }}"
+    state: present
+    namespace: "{{ namespace }}"
+    definition: "{{ lookup('template', 'service.yaml.j2') | from_yaml }}"
+  tags: [deploy]
+
+# ── Ingress (conditional) ─────────────────────────────────────
+- name: Apply Ingress manifest
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig_path }}"
+    state: present
+    namespace: "{{ namespace }}"
+    definition: "{{ lookup('template', 'ingress.yaml.j2') | from_yaml }}"
+  when: ingress_enabled | bool
+  tags: [deploy, ingress]

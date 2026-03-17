@@ -1,0 +1,60 @@
+# ============================================================
+# Role Variables – eks-deploy
+# Override any of these at playbook level or via Jenkins CLI.
+# Sensitive values (AWS account ID etc.) should be stored in
+# Ansible Vault or passed as Jenkins parameters.
+# ============================================================
+
+# ── AWS / ECR ────────────────────────────────────────────────
+aws_region: "us-east-1"                         # AWS region where EKS and ECR live
+aws_account_id: "123456789012"                   # Replace with your AWS account ID
+ecr_registry: "{{ aws_account_id }}.dkr.ecr.{{ aws_region }}.amazonaws.com"
+ecr_repo: "boardgame"                            # ECR repository name (no tag)
+# image_tag is intentionally NOT set here – must be passed from Jenkins
+
+# ── EKS ──────────────────────────────────────────────────────
+cluster_name: "my-eks-cluster"                   # EKS cluster name
+kubeconfig_path: "/tmp/kubeconfig-eks"           # Temp kubeconfig path on Ansible node
+
+# ── Application ──────────────────────────────────────────────
+app_name: "boardgame"                            # Used as label selector & resource name prefix
+namespace: "demoapp-dev"                         # Target Kubernetes namespace
+replicas: 2                                      # Desired pod replicas
+container_port: 8080                             # Port the container listens on
+
+# ── Storage (PVC) ───────────────────────────────────────────
+pvc_name: "boardgame-pvc"                        # PVC name
+storage_size: "1Gi"                              # Requested storage size
+storage_access_mode: "ReadWriteOnce"             # Access mode
+mount_path: "/app/data"                          # Path inside container
+volume_name: "boardgame-storage"                 # Volume name for pod spec
+
+# ── Rolling Update ───────────────────────────────────────────
+max_surge: 1                                     # Extra pods allowed during rollout
+max_unavailable: 0                               # 0 ensures zero-downtime rollout
+
+# ── Health Probes ────────────────────────────────────────────
+readiness_probe_path: "/actuator/health/readiness"
+liveness_probe_path: "/actuator/health/liveness"
+probe_initial_delay_seconds: 20
+probe_period_seconds: 10
+probe_failure_threshold: 3
+probe_timeout_seconds: 5
+
+# ── Resources ────────────────────────────────────────────────
+resources_requests_cpu: "250m"
+resources_requests_memory: "256Mi"
+resources_limits_cpu: "500m"
+resources_limits_memory: "512Mi"
+
+# ── Service ──────────────────────────────────────────────────
+service_type: "ClusterIP"                        # ClusterIP | NodePort | LoadBalancer
+service_port: 80
+
+# ── Ingress ──────────────────────────────────────────────────
+ingress_enabled: true
+ingress_host: "boardgame.example.com"            # Replace with actual domain
+ingress_class: "alb"                             # AWS ALB Ingress Controller
+
+# ── Rollout Verification ──────────────────────────────────────
+rollout_timeout: "300s"                          # Max time to wait for rollout success
