@@ -5,10 +5,15 @@ metadata:
   name: boardgame-deployment
   namespace: demoapp-dev
 spec:
+  replicas: 2 # Number of replicas that will be created for this deployment
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1        # Max extra pods allowed above desired count during update
+      maxUnavailable: 1  # Max pods that can be unavailable during update
   selector:
     matchLabels:
       app: boardgame
-  replicas: 2 # Number of replicas that will be created for this deployment
   template:
     metadata:
       labels:
