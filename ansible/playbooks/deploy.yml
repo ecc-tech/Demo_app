@@ -26,4 +26,4 @@
           ansible-playbook playbooks/deploy.yml -e "image_tag=abc1234"
 
   roles:
-    - role: eks-deploy
+    - role: ../roles/eks-deploy
