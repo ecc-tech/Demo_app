@@ -7,14 +7,14 @@
 
 # ── AWS / ECR ────────────────────────────────────────────────
 aws_region: "us-east-1"                         # AWS region where EKS and ECR live
-aws_account_id: "123456789012"                   # Replace with your AWS account ID
-ecr_registry: "{{ aws_account_id }}.dkr.ecr.{{ aws_region }}.amazonaws.com"
-ecr_repo: "boardgame"                            # ECR repository name (no tag)
+aws_account_id: "073107684180"                   # Replace with your AWS account ID
+ecr_registry: "{{ aws_account_id }}.dkr.ecr.{{ aws_region }}.amazonaws.com/data_oceano/devlop_env"
+ecr_repo: "data_oceano/devlop_env"                            # ECR repository name (no tag)
 # image_tag is intentionally NOT set here – must be passed from Jenkins
 
 # ── EKS ──────────────────────────────────────────────────────
-cluster_name: "my-eks-cluster"                   # EKS cluster name
-kubeconfig_path: "/tmp/kubeconfig-eks"           # Temp kubeconfig path on Ansible node
+cluster_name: "Data-Oceano-devCluster"                   # EKS cluster name
+kubeconfig_path: "~/.kube/config"           # Temp kubeconfig path on Ansible node
 
 # ── Application ──────────────────────────────────────────────
 app_name: "boardgame"                            # Used as label selector & resource name prefix
