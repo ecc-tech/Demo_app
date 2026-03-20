@@ -1,16 +1,35 @@
-
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: gp3
+provisioner: ebs.csi.aws.com
+volumeBindingMode: WaitForFirstConsumer
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: boardgame-pvc
+  namespace: demoapp-dev
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: gp3   # IMPORTANT
+  resources:
+    requests:
+      storage: 1Gi
+---
 apiVersion: apps/v1
-kind: Deployment # Kubernetes resource kind we are creating
+kind: Deployment
 metadata:
   name: boardgame-deployment
   namespace: demoapp-dev
 spec:
-  replicas: 2 # Number of replicas that will be created for this deployment
+  replicas: 2
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 1        # Max extra pods allowed above desired count during update
-      maxUnavailable: 1  # Max pods that can be unavailable during update
+      maxSurge: 1
+      maxUnavailable: 1
   selector:
     matchLabels:
       app: boardgame
@@ -21,29 +40,21 @@ spec:
     spec:
       containers:
         - name: boardgame
-          image: yennefer007/demoapp:v1 # Image that will be used to containers in the cluster
+          image: 073107684180.dkr.ecr.ap-south-1.amazonaws.com/data_oceano/devlop_env:v2
           imagePullPolicy: Always
           ports:
-            - containerPort: 8080 # The port that the container is running on in the cluster
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: "250m"      # 0.25 CPU
+              memory: "512Mi"  # minimum required
+            limits:
+              cpu: "500m"      # max 0.5 CPU
+              memory: "1Gi"    # max RAM
           volumeMounts:
             - name: boardgame-storage
-              mountPath: /app/data  # Path inside the container where volume is mounted
+              mountPath: /app/data
       volumes:
         - name: boardgame-storage
           persistentVolumeClaim:
-            claimName: boardgame-pvc  # Must match the PVC metadata.name above
-
----
-apiVersion: v1
-kind: PersistentVolumeClaim # PVC to request persistent storage
-metadata:
-  name: boardgame-pvc
-  namespace: demoapp-dev
-spec:
-  accessModes:
-    - ReadWriteOnce           # Single node read/write
-  resources:
-    requests:
-      storage: 1Gi            # Storage size — adjust as needed
-
----
+            claimName: boardgame-pvc
