@@ -3,16 +3,17 @@ kind: Ingress
 metadata:
   name: boardgame-ingress
   namespace: demoapp-dev
+  annotations:
+    alb.ingress.kubernetes.io/target-type: ip
 spec:
-  ingressClassName: alb                          # Use 'alb' for AWS ALB Ingress Controller
+  ingressClassName: alb
   rules:
-    - host: boardgame.example.com                  # Replace with your actual domain
-      http:
+    - http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: boardgame-ssvc               # Must match Service metadata.name
+                name: boardgame-ssvc
                 port:
-                  number: 80                       # Must match Service port
+                  number: 80
