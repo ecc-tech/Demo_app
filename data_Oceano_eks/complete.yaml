@@ -335,11 +335,11 @@ metadata:
   name: api-ingress
   namespace: api-service
   annotations:
-    kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/group.name: common-alb
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
 spec:
+  ingressClassName: alb
   rules:
   - http:
       paths:
@@ -359,9 +359,11 @@ metadata:
   name: metadata-ingress
   namespace: metadata
   annotations:
-    kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/group.name: common-alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
 spec:
+  ingressClassName: alb
   rules:
   - http:
       paths:
@@ -381,9 +383,11 @@ metadata:
   name: dedup-ingress
   namespace: dedup
   annotations:
-    kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/group.name: common-alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
 spec:
+  ingressClassName: alb
   rules:
   - http:
       paths:
@@ -403,9 +407,11 @@ metadata:
   name: data-ingress
   namespace: data-service
   annotations:
-    kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/group.name: common-alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
 spec:
+  ingressClassName: alb
   rules:
   - http:
       paths:
